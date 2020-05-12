@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8"/>
+  
+    <script type="text/javascript" src="d3.js"></script>
+    <style>
+.line1{fill:none;stroke:green;stroke-width:1.5px}
+.line2{fill:none;stroke:red;stroke-width:1.5px}
+.line3{fill:none;stroke:orange;stroke-width:1.5px}
+.axis{
+    font: 10px sans-serif;
+}
+.axis path,
+.axis line{
+    fill: none;
+    stroke:#0000CD;
+    shape-rendering:crispEdges;
+}
+body{
+    background-color: paleturquoise;
+  }
+
+.column {
+  float: left;
+  width: 50%;
+}
+h2{
+    text-transform: rgb(8, 8, 63);
+}
+    </style>
+</head>
+<body>
+  <div class="column">
+    <p>Dans cette page vous pouvez voire l'étude l'évolution du taux de chômage des jeunes dans les pays membres de la CEDEAO de 2006 à 2016.
+        Cette Etude est faite à travers trois courbes représentatives à savoire:
+        <li>courbe d'évolution du taux de chômage des jeunes femmes(en vert),</li>
+        <li>courbe d'évolution du taux de chômage des jeunes hommes(en rouge),</li>
+        <li>Et celle du taux de chômage de l'ensemble des jeunes (en orange)</li>
+             </p>
+    <h4>Choisir un pays</h4>
+      <select name="choix" id="choix" onchange="cedeao()">
+        <option >-- Sélectionner --</option>
+        <option >Bénin</option>
+        <option >Burkina Faso</option>
+        <option >Cap Vert</option>
+        <option >Côte d'Ivoire</option>
+        <option >Gambie</option>
+        <option >Ghana.</option>
+        <option >Guinée</option>
+        <option >Guinee Bissau</option>
+        <option >Liberia</option>
+        <option >Mali</option>
+        <option >Niger</option>
+        <option >Nigeria</option>
+        <option >Sénégal</option>
+        <option >Sierra Leone</option>
+        <option >Togo</option>
+      </select>
+  </div>
+   <svg id="msda" width="1200" height="800"></svg>
+<script>
+    function cedeao(){
+
+        var maty = d3.select("#msda");
+            var penda = maty.selectAll('*');
+            penda.remove();
+
+        var margin={top:20,right:400,bottom:200,left:200},
+        width=1200-margin.left-margin.right,
+        height=450-margin.top-margin.bottom;
+
+
+        var svg=d3.select("#msda")
+        .append ("svg")
+        .attr ("width",width+margin.left+margin.right)
+        .attr("height",height+margin.top+margin.bottom)
+        .append("g")
+        .attr("transform","translate("+margin.left+","+margin.top+")");
+
+        var coumba =document.getElementById('choix').selectedOptions[0].text;
+        var awa = '../donnees/' + coumba + '.csv';
+        d3.csv(awa,function(error, data){
+            data.forEach(function(d){
+                d.annee=+d.annee;
+                d.tauxfemme=+d.tauxfemme;
+                d.tauxhomme=+d.tauxhomme;
+                d.ensemble=+d.ensemble;
+                });
+                A=d3.scale.linear().range([0,width]).domain([(0,2006),2016]);
+                B=d3.scale.linear().range([height,0]).domain([0,d3.max(data,function (d){return(d.tauxfemme);})]);
+
+                var xAxis=d3.svg.axis().scale(A).orient("bottom");
+                var yAxis=d3.svg.axis().scale(B).orient("left");
+                svg.append("g")
+                .attr("class","x axis")
+                .attr("transform","translate(0,"+height+")")
+                .call(xAxis);
+
+                svg.append("g")
+                .attr("class","y axis")
+                .call(yAxis);
+
+                var valueline1=d3.svg.line()
+                .x(function(d){return A(d.annee);})
+                .y(function(d){return B(d["tauxfemme"]);});
+
+                var valueline2=d3.svg.line()
+                .x(function(d){return A(d.annee);})
+                .y(function(d){return B(d["tauxhomme"]);});
+
+                var valueline3=d3.svg.line()
+                .x(function(d){return A(d.annee);})
+                .y(function(d){return B(d["ensemble"]);});
+
+                var path1=svg.append("svg:path")
+                .attr("class","line1")
+                .attr("d",valueline1(data))
+
+                var path2=svg.append("svg:path")
+                .attr("class","line2")
+                .attr("d",valueline2(data))
+
+                var path3=svg.append("svg:path")
+                .attr("class","line3")
+                .attr("d",valueline3(data))
+
+                svg.append( "text" )
+                .attr( "x" , 300)
+                .attr( "y" , 270)
+                .attr( "text-anchor" , "middle" )
+                .style( "font-size" , "18px" )
+                .text( "Années" ) ; 
+
+                svg.append( "text" )
+                .attr( "x" , -90)
+                .attr( "y" , -30)
+                .attr( "text-anchor" , "middle" )
+                .style( "font-size" , "18px" )
+                .text( "Taux de chômage" )
+                .attr("transform","rotate(-90)") ;
+
+                svg.append( "text" )
+                .attr( "x" , 900)
+                .attr( "y" , 10)
+                .attr( "text-anchor" , "middle" )
+                .style( "font-size" , "18px" )
+                .text( "Légende" ) ;
+
+                svg.append( "text" )
+                .attr( "x" , 260)
+                .attr( "y" , 300)
+                .attr( "text-anchor" , "middle" )
+                .style( "font-size" , "18px" )
+                .text( "source des données: https://ecastats.uneca.org/data/browsebyIndicator." ) ; 
+
+
+                var color=["green","red","orange"];
+                var header=["Chômage des jeunes femmes","Chômage des jeunes hommes","Chômage de l'ensemble des jeunes"]
+           
+                 // La Legende	
+	            var legends = svg.append("g")
+                .attr("transform", "translate(800,20)")
+                .selectAll(".legends").data(header);
+
+                 var legend = legends.enter()
+                 .append("g")
+                 .classed("label", true).attr("transform", function(d,i){return "translate(0," + (i+1)*30 + ")";});
+
+                 legend.append("rect")
+                .attr("width", 15)
+                .attr("height", 15)
+                .attr("fill", function(d,i){
+			        return(color[i]) ;});
+
+
+                 legend.append("text")
+                 .classed("label", true)
+                .text(function(d,i){return header[i];})
+                .attr("fill", function(d,i){return(color[i]);})
+                .attr("x", 30)
+                .attr("y", 15);
+  
+            
+            });
+        }       
+</script>
+</div> 
+</body>
+</html>
